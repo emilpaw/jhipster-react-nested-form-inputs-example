@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Row, Col, FormText } from 'reactstrap';
-import { ValidatedField, ValidatedForm, isEmail } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
-import { getUser, getRoles, updateUser, createUser, reset } from './user-management.reducer';
 import { useAppDispatch, useAppSelector } from 'app/config/store';
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { isEmail, ValidatedField } from 'react-jhipster';
+import { Link, RouteComponentProps } from 'react-router-dom';
+import { Button, Col, Form, FormText, Row } from 'reactstrap';
+import { createUser, getRoles, getUser, reset, updateUser } from './user-management.reducer';
 
 export const UserManagementUpdate = (props: RouteComponentProps<{ login: string }>) => {
   const [isNew] = useState(!props.match.params || !props.match.params.login);
@@ -42,6 +42,17 @@ export const UserManagementUpdate = (props: RouteComponentProps<{ login: string 
   const updating = useAppSelector(state => state.userManagement.updating);
   const authorities = useAppSelector(state => state.userManagement.authorities);
 
+  const {
+    handleSubmit,
+    register,
+    reset: resetForm,
+    formState: { errors },
+  } = useForm({ mode: 'onTouched', defaultValues: user });
+
+  useEffect(() => {
+    resetForm(user);
+  }, [reset, user]);
+
   return (
     <div>
       <Row className="justify-content-center">
@@ -54,9 +65,13 @@ export const UserManagementUpdate = (props: RouteComponentProps<{ login: string 
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <ValidatedForm onSubmit={saveUser} defaultValues={user}>
-              {user.id ? <ValidatedField type="text" name="id" required readOnly label="ID" validate={{ required: true }} /> : null}
+            <Form onSubmit={handleSubmit(saveUser)}>
+              {user.id ? (
+                <ValidatedField register={register} type="text" name="id" required readOnly label="ID" validate={{ required: true }} />
+              ) : null}
               <ValidatedField
+                register={register}
+                error={errors?.login}
                 type="text"
                 name="login"
                 label="Login"
@@ -79,30 +94,42 @@ export const UserManagementUpdate = (props: RouteComponentProps<{ login: string 
                   },
                 }}
               />
-              <ValidatedField
-                type="text"
-                name="firstName"
-                label="First name"
-                validate={{
-                  maxLength: {
-                    value: 50,
-                    message: 'This field cannot be longer than 50 characters.',
-                  },
-                }}
-              />
-              <ValidatedField
-                type="text"
-                name="lastName"
-                label="Last name"
-                validate={{
-                  maxLength: {
-                    value: 50,
-                    message: 'This field cannot be longer than 50 characters.',
-                  },
-                }}
-              />
+              <Row>
+                <Col md="6">
+                  <ValidatedField
+                    register={register}
+                    error={errors?.firstName}
+                    type="text"
+                    name="firstName"
+                    label="First name"
+                    validate={{
+                      maxLength: {
+                        value: 50,
+                        message: 'This field cannot be longer than 50 characters.',
+                      },
+                    }}
+                  />
+                </Col>
+                <Col md="6">
+                  <ValidatedField
+                    register={register}
+                    error={errors?.lastName}
+                    type="text"
+                    name="lastName"
+                    label="Last name"
+                    validate={{
+                      maxLength: {
+                        value: 50,
+                        message: 'This field cannot be longer than 50 characters.',
+                      },
+                    }}
+                  />
+                </Col>
+              </Row>
               <FormText>This field cannot be longer than 50 characters.</FormText>
               <ValidatedField
+                register={register}
+                error={errors?.email}
                 name="email"
                 label="Email"
                 placeholder={'Your email'}
@@ -123,8 +150,17 @@ export const UserManagementUpdate = (props: RouteComponentProps<{ login: string 
                   validate: v => isEmail(v) || 'Your email is invalid.',
                 }}
               />
-              <ValidatedField type="checkbox" name="activated" check value={true} disabled={!user.id} label="Activated" />
-              <ValidatedField type="select" name="authorities" multiple label="Profiles">
+              <ValidatedField
+                register={register}
+                error={errors?.activated}
+                type="checkbox"
+                name="activated"
+                check
+                value={true}
+                disabled={!user.id}
+                label="Activated"
+              />
+              <ValidatedField register={register} type="select" name="authorities" multiple label="Profiles">
                 {authorities.map(role => (
                   <option value={role} key={role}>
                     {role}
@@ -141,7 +177,7 @@ export const UserManagementUpdate = (props: RouteComponentProps<{ login: string 
                 <FontAwesomeIcon icon="save" />
                 &nbsp; Save
               </Button>
-            </ValidatedForm>
+            </Form>
           )}
         </Col>
       </Row>
